@@ -1,0 +1,12 @@
+from ali import first; import tokenize, re
+T=lambda s,lang='python':__import__('pygments.lexers',fromlist=['get_lexer_by_name']).get_lexer_by_name(lang).get_tokens_unprocessed(s)
+ty=lambda s,lang='python',*a:sorted({str(t[1])[6:]for t in T(s,lang)if t[2].strip()})
+blank=lambda s,lang='python',pat='',*a:(lambda p:(lambda k,p2,L,off,ln:([L.__setitem__(ln(i)+j,L[ln(i)+j][:(off(i) if j==0 else 0)]+' '*len(vv)+L[ln(i)+j][(off(i) if j==0 else 0)+len(vv):]) for i,t,v in T(s,lang) if (('.'+p2+'.') in ('.'+str(t)+'.'))!=k for j,vv in enumerate(v.split('\n')) if ln(i)+j<len(L)],''.join(L))[1])(p.startswith('+'),p[1:] if p.startswith('+') else p,s.splitlines(keepends=True),lambda i:i-s.rfind('\n',0,i)-1,lambda i:s.count('\n',0,i)))(pat or (first(ty(s,lang),cond=False,fb='sel1') or [''])[0])
+drop=lambda s,lang='python',pat='',*a:blank(s,lang,pat,*a);filt=lambda s,lang='python',pat='',*a:blank(s,lang,'+'+pat.lstrip('+'),*a)
+def kw(s,lang='python',*a): tl=ty(s,lang); return '\n'.join([','.join(tl)]+[f'{tl.index(str(t)[6:])+1} {v}' for i,t,v in T(s,lang) if v.strip()])
+T1=lambda s: list(tokenize.generate_tokens((lambda it: lambda: next(it, ''))(iter(s.splitlines(True)))))
+strip = lambda s, *a: re.sub(r'(?m)#.*$|^\s*(?:"""[\s\S]*?"""|\'\'\'[\s\S]*?\'\'\')\s*$', '', s)
+kws=lambda s,*a:(lambda k:[t.string for t in T1(s) if t.type==tokenize.NAME and t.string in k.kwlist])(__import__('keyword'))
+ty1=lambda s,*a:sorted({tokenize.tok_name[t.type] for t in T1(s) if t.type not in (tokenize.ENDMARKER,tokenize.NEWLINE)})
+def blank1(s,tys,keep,out='text'): tys=tys or (first(ty1(s),cond=False,fb='sel1') or []); ts=[getattr(tokenize,x) for x in tys]; F=[t for t in T1(s) if t.start[0]==t.end[0]]; return [(t.start[0],t.start[1],t.end[1],tokenize.tok_name[t.type]) for t in F if (t.type in ts)==keep] if out=='spans' else (lambda L:[L.__setitem__(r:=t.start[0]-1,L[r][:t.start[1]]+' '*(t.end[1]-t.start[1])+L[r][t.end[1]:]) for t in F if (t.type in ts)!=keep and t.start[0]-1<len(L)] and ''.join(L))(s.splitlines(keepends=True))
+drop1 = lambda s,*tys: blank1(s,tys,False); filt1 = lambda s,*tys: blank1(s,tys,True)
